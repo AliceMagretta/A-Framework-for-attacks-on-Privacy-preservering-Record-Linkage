@@ -206,7 +206,7 @@ def gen_bloom_filter_dict(rec_val_list, rec_id_col, encode_method, hash_type,
         bf_dict[rec_id] = rec_bf
 
         # Add q-gram positions to the dictionary
-        for q_gram, pos_set in q_gram_pos_dict.iteritems():
+        for q_gram, pos_set in q_gram_pos_dict.items():
             all_pos_set = true_q_gram_pos_dict.get(q_gram, set())
             all_pos_set.update(pos_set)
             true_q_gram_pos_dict[q_gram] = all_pos_set

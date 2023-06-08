@@ -10,6 +10,7 @@ import bitarray
 import numpy
 from libs import fptools
 from libs import importing
+from libs import bfEncoding
 
 # pma g_variables
 NUM_SAMPLE = 1000  # Number of pairs / triplets to sample when calculating
@@ -50,7 +51,7 @@ def gen_q_gram_supp_graph(unique_q_gram_set, q_gram_dict, min_supp=None):
     for q_gram in unique_q_gram_set:  # Init count for each unique q-gram
         q_gram_node_dict[q_gram] = 0
 
-    for q_gram_set in q_gram_dict.itervalues():
+    for q_gram_set in q_gram_dict.values():
 
         for q_gram1 in q_gram_set:  # Increase node support
             q_gram_node_dict[q_gram1] += 1
@@ -77,7 +78,7 @@ def gen_q_gram_supp_graph(unique_q_gram_set, q_gram_dict, min_supp=None):
     # given the source q-gram occurs (i.e. confidence)
     #
     cond_prob_edge_dict = {}
-    for (q_gram1, q_gram2) in q_gram_edge_dict.iterkeys():
+    for (q_gram1, q_gram2) in q_gram_edge_dict.keys():
         q_gram_pair_count = q_gram_edge_dict[(q_gram1, q_gram2)]
         q_gram_count1 = q_gram_node_dict[q_gram1]
 
@@ -104,7 +105,7 @@ def gen_bf_col_dict(bf_dict, bf_len):
 
     bit_col_list = [bitarray.bitarray(num_bf) for _ in range(bf_len)]
 
-    rec_id_list = sorted(bf_dict.keys())
+    rec_id_list = sorted(list(bf_dict.keys()))
 
     # Fill newly created bit position arrays
     #
@@ -145,7 +146,7 @@ def get_bf_row_col_freq_dist(bf_dict, bit_col_list):
     row_freq_dict = {}
     col_freq_dict = {}
 
-    for bf in bf_dict.itervalues():
+    for bf in bf_dict.values():
         bf_str = bf.to01()
         row_freq_dict[bf_str] = row_freq_dict.get(bf_str, 0) + 1
 
@@ -156,9 +157,9 @@ def get_bf_row_col_freq_dist(bf_dict, bit_col_list):
     row_count_dict = {}  # Now count how often each frequency occurs
     col_count_dict = {}
 
-    for freq in row_freq_dict.itervalues():
+    for freq in row_freq_dict.values():
         row_count_dict[freq] = row_count_dict.get(freq, 0) + 1
-    for freq in col_freq_dict.itervalues():
+    for freq in col_freq_dict.values():
         col_count_dict[freq] = col_count_dict.get(freq, 0) + 1
 
     return row_count_dict, col_count_dict
@@ -195,8 +196,8 @@ def check_hamming_weight_bit_positions(bf_bit_pos_list, num_sample):
             bit_pos_pair_and_dict[bit_pos_pair] = int(and_bit_array.count(1))
             bit_pos_pair_xor_dict[bit_pos_pair] = int(xor_bit_array.count(1))
 
-    bit_pos_pair_and_hw_list = bit_pos_pair_and_dict.values()
-    bit_pos_pair_xor_hw_list = bit_pos_pair_xor_dict.values()
+    bit_pos_pair_and_hw_list = list(bit_pos_pair_and_dict.values())
+    bit_pos_pair_xor_hw_list = list(bit_pos_pair_xor_dict.values())
 
     and_hw_mean = numpy.mean(bit_pos_pair_and_hw_list)
     and_hw_std = numpy.std(bit_pos_pair_and_hw_list)
@@ -227,8 +228,8 @@ def check_hamming_weight_bit_positions(bf_bit_pos_list, num_sample):
             bit_pos_triplet_xor_dict[bit_pos_triplet] = \
                 int(xor_bit_array.count(1))
 
-    bit_pos_triplet_and_hw_list = bit_pos_triplet_and_dict.values()
-    bit_pos_triplet_xor_hw_list = bit_pos_triplet_xor_dict.values()
+    bit_pos_triplet_and_hw_list = list(bit_pos_triplet_and_dict.values())
+    bit_pos_triplet_xor_hw_list = list(bit_pos_triplet_xor_dict.values())
 
     and_hw_mean = numpy.mean(bit_pos_triplet_and_hw_list)
     and_hw_std = numpy.std(bit_pos_triplet_and_hw_list)
@@ -269,7 +270,7 @@ def get_most_freq_other_q_grams(q_gram_dict, must_be_in_rec_q_gram_set,
 
     other_q_gram_freq_dict = {}
 
-    for rec_q_gram_set in q_gram_dict.itervalues():
+    for rec_q_gram_set in q_gram_dict.values():
 
         # Check if the record q-gram set fulfills the in/out conditions
 
@@ -380,7 +381,7 @@ def gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list, min_count,
     #
     freq_bit_pos_pair_dict = {}
 
-    freq_bit_pos_list = sorted(freq_bit_pos_dict.keys())
+    freq_bit_pos_list = sorted(list(freq_bit_pos_dict.keys()))
 
     for (i, pos1) in enumerate(freq_bit_pos_list[:-1]):
         for pos2 in freq_bit_pos_list[i + 1:]:
@@ -411,7 +412,7 @@ def gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list, min_count,
     curr_len_p1 = 3
 
     while (len(prev_freq_bit_pos_tuple_dict) > 1):
-        prev_freq_bit_pos_tuple_list = sorted(prev_freq_bit_pos_tuple_dict.keys())
+        prev_freq_bit_pos_tuple_list = sorted(list(prev_freq_bit_pos_tuple_dict.keys()))
 
         # Generate candidates of current length plus 1
         #
@@ -543,7 +544,7 @@ def gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list, min_count,
     freq_bit_pos_pair_dict = {}
     freq_bit_pos_pair_hw_dict = {}  # Keep HW for printing
 
-    freq_bit_pos_list = sorted(freq_bit_pos_dict.keys())
+    freq_bit_pos_list = sorted(list(freq_bit_pos_dict.keys()))
 
     for (i, pos1) in enumerate(freq_bit_pos_list[:-1]):
         bit_pos_bf1 = freq_bit_pos_dict[pos1]
@@ -567,7 +568,7 @@ def gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list, min_count,
     if (len(freq_bit_pos_pair_dict) == 0):
         freq_bit_pos_hw_dict = {}  # Generate a dictionary of tuples and their HWs
 
-        for (bit_pos, bit_pos_hw) in freq_bit_pos_hw_dict.iteritems():
+        for (bit_pos, bit_pos_hw) in freq_bit_pos_hw_dict.items():
             freq_bit_pos_hw_dict[(bit_pos,)] = bit_pos_hw
 
         return freq_bit_pos_hw_dict
@@ -582,7 +583,7 @@ def gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list, min_count,
     curr_len_p1 = 3
 
     while (len(prev_freq_bit_pos_tuple_dict) > 1):
-        prev_freq_bit_pos_tuple_list = sorted(prev_freq_bit_pos_tuple_dict.keys())
+        prev_freq_bit_pos_tuple_list = sorted(list(prev_freq_bit_pos_tuple_dict.keys()))
 
         # Generate candidates of current length plus 1
         #
@@ -638,7 +639,7 @@ def gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list, min_count,
 
     freq_bf_bit_pos_hw_dict = {}
 
-    for (bit_pos_tuple, bit_tuple_array) in freq_bf_bit_pos_dict.iteritems():
+    for (bit_pos_tuple, bit_tuple_array) in freq_bf_bit_pos_dict.items():
         freq_bf_bit_pos_hw_dict[bit_pos_tuple] = int(bit_tuple_array.count(1))
 
     return freq_bf_bit_pos_hw_dict
@@ -840,7 +841,7 @@ def gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
 
         # Loop over all candidates from the previous iteration
         #
-        for (head, tail_pair) in prev_freq_bit_pos_tuple_dict.iteritems():
+        for (head, tail_pair) in prev_freq_bit_pos_tuple_dict.items():
             head_bit_array, tail_bit_pos_list = tail_pair
 
             assert head_bit_array.count(1) >= min_count  # The head must be frequent
@@ -955,7 +956,7 @@ def gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
 
                         assert len(tail_bit_pos_list) == len(tuple_tail_item_dict)
                         assert sorted(tail_bit_pos_list) == \
-                               sorted(tuple_tail_item_dict.keys())
+                               sorted(list(tuple_tail_item_dict.keys()))
 
                         freq_long_tuple = freq_bit_pos_tuple + tuple(tail_bit_pos_list)
                         freq_long_tuple_len = len(freq_long_tuple)
@@ -1185,7 +1186,7 @@ def gen_freq_bf_bit_positions_h_mine(encode_bf_bit_pos_list,
 
     # Re-order bit positions according to their Hamming weights (smallest first)
     #
-    freq_bit_pos_list = sorted(freq_bit_pos_dict.keys(), \
+    freq_bit_pos_list = sorted(list(freq_bit_pos_dict.keys()), \
                                key=lambda v: freq_bit_pos_dict[v].count(1))
 
     maximal_freq_itemset = set()
@@ -1512,7 +1513,7 @@ def gen_lang_model(lang_model, freq_q_gram_set, q_gram_dict,
     # (tuple) keys for the language model and add the not frequent q-grams to
     # their corresponding q-gram (tuple) keys
     #
-    for rec_q_gram_list in q_gram_dict.itervalues():
+    for rec_q_gram_list in q_gram_dict.values():
 
         # Get all frequent and not frequent q-grams of this record
         #
@@ -1645,7 +1646,7 @@ def gen_lang_model(lang_model, freq_q_gram_set, q_gram_dict,
     lm_num_attr_val_list = []
     q_gram_keys_without_attr_val_list = []
 
-    for (this_q_gram_key, this_q_gram_tuple) in lm_dict.iteritems():
+    for (this_q_gram_key, this_q_gram_tuple) in lm_dict.items():
         q_gram_tuple_num_attr_val = len(this_q_gram_tuple[1])
         lm_num_attr_val_list.append(q_gram_tuple_num_attr_val)
         if (q_gram_tuple_num_attr_val == 0):
@@ -1721,7 +1722,7 @@ def gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list, min_count,
     #
     freq_bit_pos_pair_dict = {}
 
-    freq_bit_pos_list = sorted(freq_bit_pos_dict.keys())
+    freq_bit_pos_list = sorted(list(freq_bit_pos_dict.keys()))
 
     for (i, pos1) in enumerate(freq_bit_pos_list[:-1]):
         for pos2 in freq_bit_pos_list[i + 1:]:
@@ -1752,7 +1753,7 @@ def gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list, min_count,
     curr_len_p1 = 3
 
     while (len(prev_freq_bit_pos_tuple_dict) > 1):
-        prev_freq_bit_pos_tuple_list = sorted(prev_freq_bit_pos_tuple_dict.keys())
+        prev_freq_bit_pos_tuple_list = sorted(list(prev_freq_bit_pos_tuple_dict.keys()))
 
         # Generate candidates of current length plus 1
         #
@@ -1860,7 +1861,7 @@ def re_identify_attr_val_setinter(bf_must_have_q_gram_dict,
 
     rec_num = 0
 
-    for (enc_rec_id, bf_q_gram_set) in bf_must_have_q_gram_dict.iteritems():
+    for (enc_rec_id, bf_q_gram_set) in bf_must_have_q_gram_dict.items():
 
         reid_attr_set_list = []
 
@@ -1981,7 +1982,7 @@ def gen_freq_q_gram_bit_post_dict(q_gram_pos_assign_dict,
     corr_identified_q_gram_pos_dict = {}  # Only correct positions
     num_pos_removed = 0  # For the corrected dictionary
 
-    for (pos, pos_q_gram_set) in q_gram_pos_assign_dict.iteritems():
+    for (pos, pos_q_gram_set) in q_gram_pos_assign_dict.items():
 
         for q_gram in pos_q_gram_set:
 
@@ -2050,7 +2051,7 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
     q_gram_tuple_enc_rec_set_dict = {}  # Keys are q-gram tuples, values record
     # ID sets from the encoded database
 
-    for (enc_rec_id, rec_bf) in encode_bf_dict.iteritems():
+    for (enc_rec_id, rec_bf) in encode_bf_dict.items():
         must_have_q_gram_set = bf_must_have_q_gram_dict.get(enc_rec_id, set())
         cannot_have_q_gram_set = bf_cannot_have_q_gram_dict.get(enc_rec_id, set())
 
@@ -2089,7 +2090,7 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
     # q-gram tuple
     #
     num_enc_rec_id_list = []
-    for q_gram_tuple_rec_id_set in q_gram_tuple_enc_rec_set_dict.itervalues():
+    for q_gram_tuple_rec_id_set in q_gram_tuple_enc_rec_set_dict.values():
         num_enc_rec_id_list.append(len(q_gram_tuple_rec_id_set))
 
     # Remove q-grams tuples that are not long enough
@@ -2098,7 +2099,8 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
 
     num_many_del = 0
 
-    for q_gram_tuple in q_gram_tuple_enc_rec_set_dict.keys():
+    q_gram_tuple_enc_rec_set_key_list = list(q_gram_tuple_enc_rec_set_dict.keys())
+    for q_gram_tuple in q_gram_tuple_enc_rec_set_key_list:
         if (len(q_gram_tuple) < min_q_gram_tuple_size):
 
             # If the tuple has more than one encoded BF remove it
@@ -2108,7 +2110,7 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
                 num_short_tuples_del += 1
 
     num_enc_rec_id_list = []
-    for q_gram_tuple_rec_id_set in q_gram_tuple_enc_rec_set_dict.itervalues():
+    for q_gram_tuple_rec_id_set in q_gram_tuple_enc_rec_set_dict.values():
         num_enc_rec_id_list.append(len(q_gram_tuple_rec_id_set))
 
     # Step 2: For each found q-gram tuple which has encoded BFs, get the
@@ -2124,14 +2126,14 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
     num_same_length_q_gram_tuple = 0
 
     q_gram_tuple_len_list = []
-    for q_gram_tuple in q_gram_tuple_enc_rec_set_dict.iterkeys():
+    for q_gram_tuple in q_gram_tuple_enc_rec_set_dict.keys():
         q_gram_tuple_len_list.append((q_gram_tuple, len(q_gram_tuple)))
 
     # Loop over all attribute values from the plain-text database and their
     # record identifiers, and find the q-gram tuples that have all q-grams in an
     # attribute value
     #
-    for (attr_val, plain_rec_id_set) in plain_attr_val_rec_id_dict.iteritems():
+    for (attr_val, plain_rec_id_set) in plain_attr_val_rec_id_dict.items():
 
         # Keep all matching q-gram tuples and their length (number of q-grams)
         #
@@ -2197,13 +2199,13 @@ def get_matching_bf_sets(identified_q_gram_pos_dict, encode_bf_dict,
     # q-gram tuple
     #
     num_plain_rec_id_list = []
-    for q_gram_tuple_rec_id_set in q_gram_tuple_plain_rec_set_dict.itervalues():
+    for q_gram_tuple_rec_id_set in q_gram_tuple_plain_rec_set_dict.values():
         num_plain_rec_id_list.append(len(q_gram_tuple_rec_id_set))
 
     # Generate final dictionary to be returned
     #
     for (q_gram_tuple, enc_q_gram_tuple_rec_id_set) in \
-            q_gram_tuple_enc_rec_set_dict.iteritems():
+            q_gram_tuple_enc_rec_set_dict.items():
         if (q_gram_tuple in q_gram_tuple_plain_rec_set_dict):
             plain_q_gram_tuple_rec_id_set = \
                 q_gram_tuple_plain_rec_set_dict[q_gram_tuple]
@@ -2278,7 +2280,7 @@ def calc_reident_accuracy(q_gram_tuple_rec_id_dict, encode_rec_val_dict,
     encode_plain_rec_id_dict = {}
 
     for (q_gram_tuple, attr_val_rec_id_sets_pair) in \
-            q_gram_tuple_rec_id_dict.iteritems():
+            q_gram_tuple_rec_id_dict.items():
         bf_rec_id_set = attr_val_rec_id_sets_pair[0]
         plain_rec_id_set = attr_val_rec_id_sets_pair[1]
 
@@ -2289,7 +2291,7 @@ def calc_reident_accuracy(q_gram_tuple_rec_id_dict, encode_rec_val_dict,
 
     # Now loop over these encoded BFs and their plain-text record identifier sets
     #
-    for (bf_rec_id, bf_plain_rec_set) in encode_plain_rec_id_dict.iteritems():
+    for (bf_rec_id, bf_plain_rec_set) in encode_plain_rec_id_dict.items():
 
         # First get all the plain-text attribute values from the corresponding
         # records
@@ -2539,7 +2541,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     # counts, and a dictionary of edges (q-gram pairs) and their counts
     #
     plain_q_gram_node_dict, plain_q_gram_edge_dict, plain_q_gram_cond_prob_dict = \
-        pma.gen_q_gram_supp_graph(plain_unique_q_gram_set,
+        gen_q_gram_supp_graph(plain_unique_q_gram_set,
                                   plain_q_gram_dict)
 
     encode_num_bf = len(encode_bf_dict)
@@ -2547,7 +2549,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     if (same_data_attr_flag == False):
 
         plain_bf_dict, plain_true_q_gram_pos_map_dict = \
-            pma.gen_bloom_filter_dict(plain_rec_val_list, plain_rec_id_col,
+            bfEncoding.gen_bloom_filter_dict(plain_rec_val_list, plain_rec_id_col,
                                       bf_encode, hash_type, bf_len,
                                       num_hash_funct, plain_attr_list, q,
                                       padded, bf_harden, enc_param_list,
@@ -2566,12 +2568,12 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     encode_true_pos_q_gram_dict = {}
     plain_true_pos_q_gram_dict = {}
 
-    for (q_gram, encode_pos_set) in encode_true_q_gram_pos_map_dict.iteritems():
+    for (q_gram, encode_pos_set) in encode_true_q_gram_pos_map_dict.items():
         for pos in encode_pos_set:
             q_gram_set = encode_true_pos_q_gram_dict.get(pos, set())
             q_gram_set.add(q_gram)
             encode_true_pos_q_gram_dict[pos] = q_gram_set
-    for (q_gram, plain_pos_set) in plain_true_q_gram_pos_map_dict.iteritems():
+    for (q_gram, plain_pos_set) in plain_true_q_gram_pos_map_dict.items():
         for pos in plain_pos_set:
             q_gram_set = plain_true_pos_q_gram_dict.get(pos, set())
             q_gram_set.add(q_gram)
@@ -2589,25 +2591,25 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     #
     if (bf_harden == 'balance'):
         encode_bf_bit_pos_list, encode_rec_id_list = \
-            pma.gen_bf_col_dict(encode_bf_dict, bf_len * 2)
+            gen_bf_col_dict(encode_bf_dict, bf_len * 2)
     elif (bf_harden == 'fold'):
         encode_bf_bit_pos_list, encode_rec_id_list = \
-            pma.gen_bf_col_dict(encode_bf_dict, bf_len / 2)
+            gen_bf_col_dict(encode_bf_dict, bf_len / 2)
     else:
         encode_bf_bit_pos_list, encode_rec_id_list = \
-            pma.gen_bf_col_dict(encode_bf_dict, bf_len)
+            gen_bf_col_dict(encode_bf_dict, bf_len)
 
     # Get the frequency distribution of how often each BF row and column occurs
     #
-    row_count_dict, col_count_dict = pma.get_bf_row_col_freq_dist(encode_bf_dict,
+    row_count_dict, col_count_dict = get_bf_row_col_freq_dist(encode_bf_dict,
                                                                   encode_bf_bit_pos_list)
-    most_freq_bf_pattern_count = max(row_count_dict.keys())
-    most_freq_bf_bit_pos_pattern_count = max(col_count_dict.keys())
+    most_freq_bf_pattern_count = max(list(row_count_dict.keys()))
+    most_freq_bf_bit_pos_pattern_count = max(list(col_count_dict.keys()))
 
     # Calculate and print the average Hamming weight for pairs and triplets of
     # randomly selected bit positions
     #
-    pma.check_hamming_weight_bit_positions(encode_bf_bit_pos_list, NUM_SAMPLE)
+    check_hamming_weight_bit_positions(encode_bf_bit_pos_list, NUM_SAMPLE)
 
     # -----------------------------------------------------------------------------
     # stage 2: Recursively find most frequent q-gram, then BF bit positions that are
@@ -2687,7 +2689,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
         # plain text data set in the current partition (i.e. with q-gram sets that
         # must be in records or not in records for filtering)
         #
-        freq_q_gram_count_list = pma.get_most_freq_other_q_grams(plain_q_gram_dict,
+        freq_q_gram_count_list = get_most_freq_other_q_grams(plain_q_gram_dict,
                                                                  must_be_in_rec_q_gram_set,
                                                                  must_not_be_in_rec_q_gram_set)
         most_freq_q_gram1, most_freq_q_gram_count1 = freq_q_gram_count_list[0]
@@ -2768,7 +2770,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # bit positions (BF columns) with a minimum count of common 1-bits)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list,
                                                           apriori_bf_min_count,
                                                           col_filter_set,
                                                           row_filter_bit_array)
@@ -2779,7 +2781,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # weights, so approach this is faster but needs more memory
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list,
                                                                apriori_bf_min_count,
                                                                col_filter_set,
                                                                row_filter_bit_array)
@@ -2789,7 +2791,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the Max-Miner approach (Bayardo, 1998)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
                                                             apriori_bf_min_count,
                                                             col_filter_set,
                                                             row_filter_bit_array)
@@ -2798,7 +2800,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the H-mine approach (J Pei, J Han, H Lu, et al., 2007)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_h_mine(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_h_mine(encode_bf_bit_pos_list,
                                                          apriori_bf_min_count,
                                                          col_filter_set,
                                                          row_filter_bit_array)
@@ -2808,7 +2810,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the FP tree and FPmax algorithm
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_fp_max(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_fp_max(encode_bf_bit_pos_list,
                                                          apriori_bf_min_count,
                                                          col_filter_set,
                                                          row_filter_bit_array)
@@ -2868,7 +2870,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
 
         if (len(freq_bf_bit_pos_dict) == 1):  # Only one longest bit position tuple
 
-            most_freq_pos_tuple, most_freq_count = freq_bf_bit_pos_dict.items()[0]
+            most_freq_pos_tuple, most_freq_count = list(freq_bf_bit_pos_dict.items())[0]
             print('  One single longest bit position tuple of length %d and ' % \
                   (len(most_freq_pos_tuple)) + 'frequency %d identified' % \
                   (most_freq_count))
@@ -3220,7 +3222,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     plain_bit_pos_q_gram_false_pos_list = []  # positions we identified
 
     assigned_q_gram_pos_dict = {}
-    for (pos, pos_q_gram_set) in q_gram_pos_assign_dict.iteritems():
+    for (pos, pos_q_gram_set) in q_gram_pos_assign_dict.items():
         for q_gram in pos_q_gram_set:
             q_gram_pos_set = assigned_q_gram_pos_dict.get(q_gram, set())
             q_gram_pos_set.add(pos)
@@ -3386,9 +3388,9 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     bf_must_have_set_size_list = []
     bf_cannot_have_set_size_list = []
 
-    for q_gram_set in bf_must_have_q_gram_dict.itervalues():
+    for q_gram_set in bf_must_have_q_gram_dict.values():
         bf_must_have_set_size_list.append(len(q_gram_set))
-    for q_gram_set in bf_cannot_have_q_gram_dict.itervalues():
+    for q_gram_set in bf_cannot_have_q_gram_dict.values():
         bf_cannot_have_set_size_list.append(len(q_gram_set))
 
     print('#### Summary of q-gram sets assigned to BFs:')
@@ -3414,13 +3416,13 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     bf_must_have_prec_list = []
     bf_cannot_have_prec_list = []
 
-    for (bf_rec_id, q_gram_set) in bf_must_have_q_gram_dict.iteritems():
+    for (bf_rec_id, q_gram_set) in bf_must_have_q_gram_dict.items():
         true_q_gram_set = encode_q_gram_dict[bf_rec_id]
         must_have_prec = float(len(q_gram_set & true_q_gram_set)) / len(q_gram_set)
 
         bf_must_have_prec_list.append(must_have_prec)
 
-    for (bf_rec_id, q_gram_set) in bf_cannot_have_q_gram_dict.iteritems():
+    for (bf_rec_id, q_gram_set) in bf_cannot_have_q_gram_dict.items():
         true_q_gram_set = encode_q_gram_dict[bf_rec_id]
 
         cannot_have_prec = 1.0 - float(len(q_gram_set & true_q_gram_set)) / \
@@ -3456,7 +3458,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
 
     # First generate the desired language model (with minimum frequency as 1)
     #
-    lang_model_dict = pma.gen_lang_model(expand_lang_model, identified_q_gram_set,
+    lang_model_dict = gen_lang_model(expand_lang_model, identified_q_gram_set,
                                          plain_q_gram_dict,
                                          plain_attr_val_freq_q_gram_dict,
                                          lang_model_min_freq)
@@ -3715,7 +3717,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # bit positions (BF columns) with a minimum count of common 1-bits)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_apriori(encode_bf_bit_pos_list,
                                                           bit_pos_min_supp,
                                                           considered_bit_pos_set,
                                                           sel_bit_row_filter_bit_array)
@@ -3725,7 +3727,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # weights, so approach this is faster but needs more memory
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_apriori_memo(encode_bf_bit_pos_list,
                                                                bit_pos_min_supp,
                                                                considered_bit_pos_set,
                                                                sel_bit_row_filter_bit_array)
@@ -3734,7 +3736,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the Max-Miner approach (Bayardo, 1998)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_max_miner(encode_bf_bit_pos_list,
                                                             bit_pos_min_supp,
                                                             considered_bit_pos_set,
                                                             sel_bit_row_filter_bit_array)
@@ -3743,7 +3745,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the H-mine approach (J Pei, J Han, H Lu, et al., 2007)
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_h_mine(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_h_mine(encode_bf_bit_pos_list,
                                                          bit_pos_min_supp,
                                                          considered_bit_pos_set,
                                                          sel_bit_row_filter_bit_array)
@@ -3752,7 +3754,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # Run the FP tree and FPmax algorithm
                 #
                 pm_freq_bf_bit_pos_dict = \
-                    pma.gen_freq_bf_bit_positions_fp_max(encode_bf_bit_pos_list,
+                    gen_freq_bf_bit_positions_fp_max(encode_bf_bit_pos_list,
                                                          bit_pos_min_supp,
                                                          considered_bit_pos_set,
                                                          sel_bit_row_filter_bit_array)
@@ -3766,7 +3768,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 continue
 
             elif (len(pm_freq_bf_bit_pos_dict) == 1):  # Only one bit position tuple
-                most_freq_pos_tuple, most_freq_count = pm_freq_bf_bit_pos_dict.items()[0]
+                most_freq_pos_tuple, most_freq_count = list(pm_freq_bf_bit_pos_dict.items())[0]
 
 
             else:  # Several bit position tuples identified
@@ -3863,7 +3865,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
             # Calculate accuracy of identified bit positions
             #
             q_gram1_true_bit_pos_set = set()
-            for (pos, encode_q_gram_set) in encode_true_pos_q_gram_dict.iteritems():
+            for (pos, encode_q_gram_set) in encode_true_pos_q_gram_dict.items():
                 if (q_gram1 in encode_q_gram_set):
                     q_gram1_true_bit_pos_set.add(pos)
 
@@ -3906,12 +3908,12 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     encode_bit_pos_q_gram_false_pos_list2 = []  # Also keep track of how many wrong
     plain_bit_pos_q_gram_false_pos_list2 = []  # positions we identified
 
-    for (pos, encode_q_gram_set) in encode_true_pos_q_gram_dict.iteritems():
+    for (pos, encode_q_gram_set) in encode_true_pos_q_gram_dict.items():
         for q_gram in encode_q_gram_set:
             q_gram_pos_set = encode_true_q_gram_pos_dict.get(q_gram, set())
             q_gram_pos_set.add(pos)
             encode_true_q_gram_pos_dict[q_gram] = q_gram_pos_set
-    for (pos, plain_q_gram_set) in plain_true_pos_q_gram_dict.iteritems():
+    for (pos, plain_q_gram_set) in plain_true_pos_q_gram_dict.items():
         for q_gram in plain_q_gram_set:
             q_gram_pos_set = plain_true_q_gram_pos_dict.get(q_gram, set())
             q_gram_pos_set.add(pos)
@@ -4125,9 +4127,9 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     bf_cannot_have_set_size_list2 = []
     bf_combined_set_size_list2 = []
 
-    for q_gram_set in bf_must_have_q_gram_dict2.itervalues():
+    for q_gram_set in bf_must_have_q_gram_dict2.values():
         bf_must_have_set_size_list2.append(len(q_gram_set))
-    for q_gram_set in bf_cannot_have_q_gram_dict2.itervalues():
+    for q_gram_set in bf_cannot_have_q_gram_dict2.values():
         bf_cannot_have_set_size_list2.append(len(q_gram_set))
 
     all_rec_id_set = set(bf_must_have_q_gram_dict2.keys()) | \
@@ -4173,12 +4175,12 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
     bf_must_have_prec_list2 = []
     bf_cannot_have_prec_list2 = []
 
-    for (bf_rec_id, q_gram_set) in bf_must_have_q_gram_dict2.iteritems():
+    for (bf_rec_id, q_gram_set) in bf_must_have_q_gram_dict2.items():
         true_q_gram_set = set(encode_q_gram_dict[bf_rec_id])
         must_have_prec = float(len(q_gram_set & true_q_gram_set)) / len(q_gram_set)
         bf_must_have_prec_list2.append(must_have_prec)
 
-    for (bf_rec_id, q_gram_set) in bf_cannot_have_q_gram_dict2.iteritems():
+    for (bf_rec_id, q_gram_set) in bf_cannot_have_q_gram_dict2.items():
         true_q_gram_set = set(encode_q_gram_dict[bf_rec_id])
         cannot_have_prec = 1.0 - float(len(q_gram_set & true_q_gram_set)) / \
                            len(q_gram_set)
@@ -4242,7 +4244,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
         print('Calculating lower and upper bounds on number of q-grams encoded ' + \
               'in BFs:')
 
-        for (enc_rec_id, rec_bf) in encode_bf_dict.iteritems():
+        for (enc_rec_id, rec_bf) in encode_bf_dict.items():
             true_num_q_gram = len(encode_q_gram_dict[enc_rec_id])
 
             bf_hw = float(rec_bf.count(1))
@@ -4393,7 +4395,7 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
             start_time = time.time()
 
             if (re_id_method == 'set_inter'):
-                reid_res_tuple = pma.re_identify_attr_val_setinter(use_bf_must_have_q_gram_dict,
+                reid_res_tuple = re_identify_attr_val_setinter(use_bf_must_have_q_gram_dict,
                                                                    use_bf_cannot_have_q_gram_dict,
                                                                    plain_q_gram_attr_val_dict,
                                                                    encode_rec_val_dict,
@@ -4403,17 +4405,17 @@ def attack(q, padded, bf_harden, encode_attr_list, plain_attr_list, plain_rec_id
                 # First get sets of bit positions per frequent q-gram
                 #
                 all_identified_q_gram_pos_dict, corr_identified_q_gram_pos_dict = \
-                    pma.gen_freq_q_gram_bit_post_dict(use_q_gram_pos_assign_dict,
+                    gen_freq_q_gram_bit_post_dict(use_q_gram_pos_assign_dict,
                                                       encode_true_pos_q_gram_dict)
 
                 all_bf_q_gram_rec_id_dict = \
-                    pma.get_matching_bf_sets(all_identified_q_gram_pos_dict,
+                    get_matching_bf_sets(all_identified_q_gram_pos_dict,
                                              encode_bf_dict,
                                              plain_attr_val_rec_id_dict,
                                              use_bf_must_have_q_gram_dict,
                                              use_bf_cannot_have_q_gram_dict, bf_len)
 
-                reid_res_tuple = pma.calc_reident_accuracy(all_bf_q_gram_rec_id_dict,
+                reid_res_tuple = calc_reident_accuracy(all_bf_q_gram_rec_id_dict,
                                                            encode_rec_val_dict,
                                                            plain_rec_val_dict,
                                                            plain_val_num_q_gram_dict,

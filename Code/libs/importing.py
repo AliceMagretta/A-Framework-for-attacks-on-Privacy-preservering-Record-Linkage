@@ -39,7 +39,8 @@ def load_data_set_extract_attr_val(file_name, rec_id_col, use_attr_list,
 
     if (header_line == True):
         h_list = next(csv_reader)
-        header_list = h_list[0].split(",")
+        header_list = h_list
+        print(header_list)
 
     use_attr_name_list = []
     if (header_line == True):

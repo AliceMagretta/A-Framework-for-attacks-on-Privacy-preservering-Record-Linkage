@@ -12,9 +12,9 @@ import Config as C
 from libs import importing
 from libs import bfEncoding
 from libs import evaluating
-# from libs import patternmining_attack as pma
-# from libs import bit_patternfrequency_attack as bpf
-# from libs import graph_matching_attack as gma
+from libs.attacks import patternmining_attack as pma
+#from libs.attacks import bit_patternfrequency_attack as bpf
+#from libs.attacks import graph_matching_attack as gma
 import csv
 import gzip
 import math
@@ -33,8 +33,10 @@ global plain_header_combobox
 global data_list
 global activat_menu
 global datasets
+pm_dict = {}
 activat_menu = None
 datasets = {}
+result_name_list = []
 
 
 # check box
@@ -407,6 +409,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.input_s = QtWidgets.QLineEdit(self.widget)
         self.input_s.setObjectName("input_p")
         self.horizontalLayout.addWidget(self.input_s)
+        self.input_s.setText('","')
         self.input_s.setStyleSheet(''' height : 30px;
                                                            border-style: outset;
                                                            padding-left: 5px;
@@ -537,6 +540,7 @@ class MainUi(QtWidgets.QMainWindow):
         # plaintext column sep char
         self.input_s_p = QtWidgets.QLineEdit(self.widget)
         self.input_s_p.setObjectName("input_p")
+        self.input_s_p.setText('","')
         self.horizontalLayout_p.addWidget(self.input_s_p)
         self.input_s_p.setStyleSheet(''' height : 30px;
                                                            border-style: outset;
@@ -647,6 +651,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.main_layout.removeWidget(self.right_widget)  # remove exist right widget
         if self.right_widget_p:
             self.main_layout.removeWidget(self.right_widget_p)  # remove exist right widget
+
         self.setWindowTitle('attack simulator - attack manage')
         self.setLeftMenu(self.left_button_3)  # select button effect
 
@@ -727,6 +732,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.horizontalLayout.addWidget(self.ckb2)
             self.ckb3 = QCheckBox(self)
             self.ckb3.setText('maxminer')
+            self.ckb3.setChecked(True)
             self.horizontalLayout.addWidget(self.ckb3)
             self.ckb4 = QCheckBox(self)
             self.ckb4.setText('hmine')
@@ -767,6 +773,7 @@ class MainUi(QtWidgets.QMainWindow):
 
             self.input_1 = QtWidgets.QLineEdit(self.widget)
             self.input_1.setObjectName("input_1")
+            self.input_1.setText("1.0")
             self.horizontalLayout.addWidget(self.input_1)
 
             # space
@@ -784,6 +791,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.horizontalLayout.addWidget(self.label_3)
             self.input_2 = QtWidgets.QLineEdit(self.widget)
             self.input_2.setObjectName("input_2")
+            self.input_2.setText("5.0")
             self.horizontalLayout.addWidget(self.input_2)
             self.input_2.setStyleSheet(''' height : 30px;
                                                          border-style: outset;
@@ -806,6 +814,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.horizontalLayout.addWidget(self.label_4)
             self.input_3 = QtWidgets.QLineEdit(self.widget)
             self.input_3.setObjectName("input_3")
+            self.input_3.setText("10000")
             self.horizontalLayout.addWidget(self.input_3)
             self.input_3.setStyleSheet(''' height : 30px;
                                                          border-style: outset;
@@ -824,6 +833,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.horizontalLayout_p.addWidget(self.label_5)
             self.input_4 = QtWidgets.QLineEdit(self.widget)
             self.input_4.setObjectName("input_4")
+            self.input_4.setText("10")
             self.horizontalLayout_p.addWidget(self.input_4)
             self.input_4.setStyleSheet(''' height : 30px;
                                                          border-style: outset;
@@ -850,6 +860,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.cb2.setToolTip("The approach to be used for re-identification,\n"
                                 "if set to 'none' then no re-identification will be attempted")
             self.cb2.setToolTipDuration(3000)
+            self.cb2.setCurrentIndex(3)
             self.horizontalLayout_p.addWidget(self.cb2)
 
             # space
@@ -868,6 +879,7 @@ class MainUi(QtWidgets.QMainWindow):
                                                           font : 18px  ''')
             self.cb3.setToolTip("select one language model type")
             self.cb3.setToolTipDuration(2000)
+            self.cb3.setCurrentIndex(1)
             self.horizontalLayout_p.addWidget(self.cb3)
 
             # space
@@ -883,6 +895,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.horizontalLayout_p.addWidget(self.label_6)
             self.input_5 = QtWidgets.QLineEdit(self.widget)
             self.input_5.setObjectName("input_5")
+            self.input_5.setText("5")
             self.horizontalLayout_p.addWidget(self.input_5)
             self.input_5.setStyleSheet(''' height : 30px;
                                                                     border-style: outset;
@@ -923,11 +936,25 @@ class MainUi(QtWidgets.QMainWindow):
             spacerItem = QtWidgets.QSpacerItem(3, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
             self.horizontalLayout_b.addItem(spacerItem)
 
-            # attack button
+            m_list = []
+            if self.ckb1.isChecked():
+                m_list.append('apriori')
+            if self.ckb2.isChecked():
+                m_list.append('mapriori')
+            if self.ckb3.isChecked():
+                m_list.append('maxminer')
+            if self.ckb4.isChecked():
+                m_list.append('hmine')
+
             self.pushButton_3 = QtWidgets.QPushButton(self.widget)
-            self.pushButton_3.setObjectName("pushButton")
+            self.pushButton_3.setObjectName("pushButton_3")
             self.horizontalLayout_b.addWidget(self.pushButton_3)
-            self.pushButton_3.clicked.connect(lambda: self.attack())
+            self.pushButton_3.clicked.connect(
+                lambda: self.attack(time.time(), m_list, self.input_1.text(),
+                                    self.input_2.text(), self.input_3.text(), self.input_4.text(),
+                                    self.cb2.currentText(), self.cb3.currentText(), self.input_5.text()))
+
+
             self.pushButton_3.setStyleSheet(''' text-align : center;
                                                   background-color : #009688;
                                                   height : 80px;
@@ -955,57 +982,143 @@ class MainUi(QtWidgets.QMainWindow):
             self.label_6.setText(_translate("Form", "lang_model_min_freq"))
             self.pushButton_3.setText(_translate("Form", "Start Attack"))
             self.textBrowserWidget.setHtml(_translate("Form",
-                                                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-                                                "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-                                                "p, li { white-space: pre-wrap; }\n"
-                                                "</style></head><body style=\" font-family:\'SimSun\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt; font-weight:600; color:#00aaff;\">Pattern mining based attack</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://ieeexplore.ieee.org/abstract/document/8731536\"><span style=\" text-decoration: underline; color:#0000ff;\">Paper URL</span></a></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; text-decoration: underline; color:#0000ff;\"><br /></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; text-decoration: underline; color:#0000ff;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'HelveticaNeue Regular\',\'sans-serif\'; font-size:18px; font-weight:696; color:#00aaff; background-color:#ffffff;\">Abstract:</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;\"><span style=\" font-family:\'HelveticaNeue Regular\',\'sans-serif\'; font-size:10pt; color:#333333; background-color:#ffffff;\">Privacy-preserving record linkage (PPRL) is the process of identifying records that correspond to the same entities across several databases without revealing any sensitive information about these entities. One popular PPRL technique is Bloom filter (BF) encoding, with first applications of BF based PPRL now being employed in real-world linkage applications. Here we present a cryptanalysis attack that can re-identify attribute values encoded in BFs. Our method applies maximal frequent itemset mining on a BF database to first identify sets of frequently co-occurring bit positions that correspond to encoded frequent q-grams (character substrings extracted from plain-text values). Using a language model, we then identify additional q-grams by applying pattern mining on subsets of BFs that encode a previously identified frequent q-gram. Experiments on a real database show that our attack can successfully re-identify sensitive values even when each BF in a database is unique.</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt; font-weight:600; color:#00aaff;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:600; color:#00aaff;\">Attack Process Info:</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 1: Identifying Co-occurring Bit Positions</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 2: Language Model Based Q-gram Set Expansion</span> </p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 3: Plain-text Value Re-identifification</span> </p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:600; color:#00aaff;\">Parameters detail:</span><span style=\" font-weight:600;\"> </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">pattern_mine_method_str: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">  </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The name of the algorithm use for pattern mining,<br />where possible values are:<br />   - apriori   Classical breath-first Apriori<br />   - mapriori  Memory-based Apriori<br />   - maxminer  The breath-first Max-Minor approach<br />   - hmine</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">stop_iter_perc:</span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">         </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum percentage difference required between<br />the two most frequent q-grams to continue the<br />recursive Apriori pattern mining approach</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">stop_iter_perc_lm: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">        </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum percentage difference required between<br />the two q-grams with highest condional probabilities<br />in language model</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">min_part_size:</span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum number of BFs in a \'partition\' for the<br />partition to be used with the Apriori algorithm</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">max_num_many: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">For the re-identification step, the maximum number<br />of 1-to-many matches to consider</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">re_id_method: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The approach to be used for re-identification, </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">with possible values: </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'set_inter\'</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'apriori\'<br />   -\'q_gram_tuple\' </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'bf_q_gram_tuple\' </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'bf_tuple\'<br />   -\'all\'</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'none\' (if set to \'none\' then no<br />    re-identification will be attempted)<br /></span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">expand_lang_model: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">        </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">expand lang modelis the language model type. </span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">Inputs can be:<br />   - single<br />   - tuple<br />   - all</span></p>\n"
-                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">lang_model_min_freq:</span></p>\n"
-                                                "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">minimum frequency of language model</span></p></body></html>"))
-
+                                                      "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+                                                      "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                                      "p, li { white-space: pre-wrap; }\n"
+                                                      "</style></head><body style=\" font-family:\'SimSun\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:18pt; font-weight:600; color:#00aaff;\">Pattern mining based attack</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://ieeexplore.ieee.org/abstract/document/8731536\"><span style=\" text-decoration: underline; color:#0000ff;\">Paper URL</span></a></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; text-decoration: underline; color:#0000ff;\"><br /></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; text-decoration: underline; color:#0000ff;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'HelveticaNeue Regular\',\'sans-serif\'; font-size:18px; font-weight:696; color:#00aaff; background-color:#ffffff;\">Abstract:</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;\"><span style=\" font-family:\'HelveticaNeue Regular\',\'sans-serif\'; font-size:10pt; color:#333333; background-color:#ffffff;\">Privacy-preserving record linkage (PPRL) is the process of identifying records that correspond to the same entities across several databases without revealing any sensitive information about these entities. One popular PPRL technique is Bloom filter (BF) encoding, with first applications of BF based PPRL now being employed in real-world linkage applications. Here we present a cryptanalysis attack that can re-identify attribute values encoded in BFs. Our method applies maximal frequent itemset mining on a BF database to first identify sets of frequently co-occurring bit positions that correspond to encoded frequent q-grams (character substrings extracted from plain-text values). Using a language model, we then identify additional q-grams by applying pattern mining on subsets of BFs that encode a previously identified frequent q-gram. Experiments on a real database show that our attack can successfully re-identify sensitive values even when each BF in a database is unique.</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt; font-weight:600; color:#00aaff;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:600; color:#00aaff;\">Attack Process Info:</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 1: Identifying Co-occurring Bit Positions</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 2: Language Model Based Q-gram Set Expansion</span> </p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'NimbusRomNo9L-Medi\'; font-size:9.46485pt; font-weight:600; color:#000000;\">Step 3: Plain-text Value Re-identifification</span> </p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:600; color:#00aaff;\">Parameters detail:</span><span style=\" font-weight:600;\"> </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">pattern_mine_method_str: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">  </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The name of the algorithm use for pattern mining,<br />where possible values are:<br />   - apriori   Classical breath-first Apriori<br />   - mapriori  Memory-based Apriori<br />   - maxminer  The breath-first Max-Minor approach<br />   - hmine</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">stop_iter_perc:</span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">         </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum percentage difference required between<br />the two most frequent q-grams to continue the<br />recursive Apriori pattern mining approach</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">stop_iter_perc_lm: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">        </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum percentage difference required between<br />the two q-grams with highest condional probabilities<br />in language model</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">min_part_size:</span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The minimum number of BFs in a \'partition\' for the<br />partition to be used with the Apriori algorithm</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">max_num_many: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">For the re-identification step, the maximum number<br />of 1-to-many matches to consider</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">re_id_method: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">             </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">The approach to be used for re-identification, </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">with possible values: </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'set_inter\'</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'apriori\'<br />   -\'q_gram_tuple\' </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'bf_q_gram_tuple\' </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'bf_tuple\'<br />   -\'all\'</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">   -\'none\' (if set to \'none\' then no<br />    re-identification will be attempted)<br /></span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">expand_lang_model: </span><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">        </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">expand lang modelis the language model type. </span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">Inputs can be:<br />   - single<br />   - tuple<br />   - all</span></p>\n"
+                                                      "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\"><br /></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; font-weight:600; color:#000000;\">lang_model_min_freq:</span></p>\n"
+                                                      "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'JetBrains Mono\',\'monospace\'; font-size:9.8pt; color:#000000;\">minimum frequency of language model</span></p></body></html>"))
 
         return self.right_widget
 
     # evaluation manager
     def evaluation_management(self):
+        global result_name_list
+        global dataset_names_list
+        if self.right_widget:
+            self.main_layout.removeWidget(self.right_widget)  # remove exist right widget
+        self.setWindowTitle('attack simulator - evaluation')
+        self.setLeftMenu(self.left_button_4)  # select button effect
+        self.right_widget = QtWidgets.QWidget()  # create new right widget
+        self.right_widget.setObjectName('right_widget')
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        self.right_layout = self.verticalLayout
+        self.right_widget.setLayout(self.right_layout)  # set right widget to layout
+
+        # right_widget is beginning at row 0, column 2, take 12 rows, 10 columns
+        self.main_layout.addWidget(self.right_widget, 0, 2, 12, 10)
+
+        self.widget = QtWidgets.QWidget()
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.label = QtWidgets.QLabel(self.widget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.label.setFont(font)
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+
+        # encode dataset comboBox1
+        self.cb1 = QComboBox(self)
+        # fill the comboBox
+        self.cb1.addItem('select a attack result')
+        dataset_names_list = self.getDatasetNameList()
+        print(dataset_names_list)
+        for result in result_name_list:
+            self.cb1.addItem(str(result))
+        if len(result_name_list) > 0:
+            self.cb1.setCurrentIndex(-1)
+        self.cb1.currentIndexChanged[int].connect(lambda: self.getResultList(self.cb1.currentText()))
+        self.cb1.setStyleSheet(''' text-align : center;
+                                                      height : 50px;
+                                                      padding-left: 10px;
+                                                      font : 24px  ''')
+        self.horizontalLayout.addWidget(self.cb1)
+        # delete dataset
+        self.pushButton_del = QtWidgets.QPushButton(self.widget)
+        self.pushButton_del.setObjectName("pushButton_del")
+        self.horizontalLayout.addWidget(self.pushButton_del)
+        self.pushButton_del.clicked.connect(lambda: self.dataDelete(self.cb1.currentText()))
+        self.pushButton_del.setStyleSheet(''' text-align : center;
+                                                      background-color : #f44336;
+                                                      height : 60px;
+                                                      width: 160px;
+                                                      border-style: outset;
+                                                      border-radius: 50px;
+                                                      color: #fff;
+                                                      font : 22px  ''')
+
+        # space
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+
+        # import dataset
+        self.pushButton_3 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_3.setObjectName("pushButton")
+        self.horizontalLayout.addWidget(self.pushButton_3)
+        self.pushButton_3.clicked.connect(lambda: self.open_file())
+        self.pushButton_3.setStyleSheet(''' text-align : center;
+                                                      background-color : #009688;
+                                                      height : 80px;
+                                                      width: 170px;
+                                                      border-style: outset;
+                                                      border-radius: 100px;
+                                                      color: #fff;
+                                                      font : 26px  ''')
+
+        # table form
+        self.verticalLayout.addWidget(self.widget)
+        self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.tableWidget.setObjectName("tableWidget")
+        self.verticalLayout.addWidget(self.tableWidget)
+
+        # set shown values
+        _translate = QtCore.QCoreApplication.translate
+        self.label.setText(_translate("Form", "select Attack Result:"))
+        self.pushButton_del.setText(_translate("Form", "Delete Result"))
+        self.pushButton_3.setText(_translate("Form", "import new"))
 
         return self.right_widget
 
@@ -1258,10 +1371,101 @@ class MainUi(QtWidgets.QMainWindow):
                     font-weight:700;
                     ''')
 
+    def encoded_check(self, encode_bf_dict):
+        if self.right_widget:
+            self.main_layout.removeWidget(self.right_widget)  # remove exist right widget
+
+        self.right_widget = QtWidgets.QWidget()  # create new right widget
+        self.right_widget.setObjectName('right_widget')
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        self.right_layout = self.verticalLayout
+        self.right_widget.setLayout(self.right_layout)  # set right widget to layout
+
+        # right_widget is beginning at row 0, column 2, take 12 rows, 10 columns
+        self.main_layout.addWidget(self.right_widget, 0, 2, 12, 10)
+        self.widget = QtWidgets.QWidget()
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+
+        # reset encode process
+        self.pushButton_del = QtWidgets.QPushButton(self.widget)
+        self.pushButton_del.setObjectName("pushButton_del")
+        self.horizontalLayout.addWidget(self.pushButton_del)
+        self.pushButton_del.clicked.connect(lambda: self.setRightWidget(self, flag=C.FLAG_ENCODING))
+        self.pushButton_del.setStyleSheet(''' text-align : center;
+                                                      background-color : #f44336;
+                                                      height : 60px;
+                                                      width: 160px;
+                                                      border-style: outset;
+                                                      border-radius: 50px;
+                                                      color: #fff;
+                                                      font : 22px  ''')
+
+        # space
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+
+        self.label = QtWidgets.QLabel(self.widget)
+        font = QtGui.QFont()
+        font.setPointSize(26)
+        self.label.setFont(font)
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+
+        # space1
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
+
+        # attack dataset
+        self.pushButton_3 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_3.setObjectName("pushButton")
+        self.horizontalLayout.addWidget(self.pushButton_3)
+        self.pushButton_3.clicked.connect(lambda: self.setRightWidget(flag=C.FLAG_ATTACK))
+        self.pushButton_3.setStyleSheet(''' text-align : center;
+                                                      background-color : #009688;
+                                                      height : 80px;
+                                                      width: 170px;
+                                                      border-style: outset;
+                                                      border-radius: 100px;
+                                                      color: #fff;
+                                                      font : 26px  ''')
+
+        # table form
+        self.verticalLayout.addWidget(self.widget)
+        self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.tableWidget.setObjectName("tableWidget")
+        self.verticalLayout.addWidget(self.tableWidget)
+
+        view_len = max(20, len(encode_bf_dict))
+        self.tableWidget.setRowCount(view_len)
+        self.tableWidget.setColumnCount(1)
+        self.tableWidget.setColumnWidth(0, 1500)
+        i = 0
+        for v in encode_bf_dict.values():
+            item = QTableWidgetItem(str(v))
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.tableWidget.setItem(i, 0, item)
+            i += 1
+            if i > view_len:
+                break
+
+        # set shown values
+        _translate = QtCore.QCoreApplication.translate
+        self.label.setText(_translate("Form", "Encoding result view"))
+        self.pushButton_del.setText(_translate("Form", "Back and Reset"))
+        self.pushButton_3.setText(_translate("Form", "Next step"))
+
+        return self.right_widget
+
     # encode function for BF encoding
     def encode(self, encode_data_set_name, plain_data_set_name, q, hash_type, num_hash_funct, bf_len, bf_harden,
                encode_attr_list, plain_attr_list, bf_encode,
                encode_col_sep_char, plain_col_sep_char, enc_param_list, harden_param_list):
+        global pm_dict
         encode_header_line_flag = True
         encode_rec_id_col = 0
         plain_rec_id_col = 0
@@ -1342,7 +1546,7 @@ class MainUi(QtWidgets.QMainWindow):
         # file name
         res_file_name = 'bf-attack-col-pattern-results-%s-%s-%s.csv' % \
                         (encode_base_data_set_name, plain_base_data_set_name, \
-                         time.strftime("%Y%m%d", time.localtime()))
+                         time.strftime("%Y%m%d-%H-%M-%S", time.localtime()))
         print()
         print('Write results into file:', res_file_name)
         print()
@@ -1420,16 +1624,7 @@ class MainUi(QtWidgets.QMainWindow):
             num_hash_funct = int(round(numpy.log(2.0) * float(bf_len) /
                                        enc_avrg_num_q_gram))
         print("pass encode 3 func")
-
-        print("encode_rec_val_list:", encode_rec_val_list[:3])
-        print("encode_rec_id_col:", encode_rec_id_col)
-        print("encode_rec_id_col:", bf_encode)
-        print("encode_rec_id_col:", hash_type)
-        print("encode_rec_id_col:", bf_len)
-        print("encode_rec_id_col:", encode_attr_list[:3])
-        print(enc_param_list)
         enc_param_list = []
-
 
         encode_bf_dict, encode_true_q_gram_pos_map_dict = \
             bfEncoding.gen_bloom_filter_dict(encode_rec_val_list, encode_rec_id_col,
@@ -1437,103 +1632,104 @@ class MainUi(QtWidgets.QMainWindow):
                                              num_hash_funct, encode_attr_list, q,
                                              padded, bf_harden, enc_param_list,
                                              harden_param_list)
+        pm_dict['q'] = q
+        pm_dict['padded'] = padded
+        pm_dict['bf_harden'] = bf_harden
+        pm_dict['encode_attr_list'] = encode_attr_list
+        pm_dict['plain_attr_list'] = plain_attr_list
+        pm_dict['plain_rec_id_col'] = plain_rec_id_col
+        pm_dict['same_data_attr_flag'] = same_data_attr_flag
+        pm_dict['encode_bf_dict'] = encode_bf_dict
+        pm_dict['bf_encode'] = bf_encode
+        pm_dict['hash_type'] = hash_type
+        pm_dict['bf_len'] = bf_len
+        pm_dict['num_hash_funct'] = num_hash_funct
+        pm_dict['enc_param_list'] = enc_param_list
+        pm_dict['res_file_name'] = res_file_name
+        pm_dict['harden_param_list'] = harden_param_list
+        pm_dict['encode_true_q_gram_pos_map_dict'] = encode_true_q_gram_pos_map_dict
+        pm_dict['encode_base_data_set_name'] = encode_base_data_set_name
+        pm_dict['plain_base_data_set_name'] = plain_base_data_set_name
+        pm_dict['mc_chain_len'] = mc_chain_len
+        pm_dict['mc_sel_method'] = mc_sel_method
+        pm_dict['encode_rec_id_col'] = encode_rec_id_col
+        pm_dict['encode_rec_val_list'] = encode_rec_val_list
+        pm_dict['encode_attr_name_list'] = encode_attr_name_list
+        pm_dict['plain_rec_val_list'] = plain_rec_val_list
+        pm_dict['plain_attr_name_list'] = plain_attr_name_list
 
         QMessageBox.information(self, 'message', "encode successfully")
-        self.encode_check(encode_bf_dict)
+        self.encoded_check(encode_bf_dict)
 
-    def encoded_check(self, encode_bf_dict):
-        if self.right_widget:
-            self.main_layout.removeWidget(self.right_widget)  # remove exist right widget
-        if self.right_widget_p:
-            self.main_layout.removeWidget(self.right_widget_p)  # remove exist right widget
-        self.right_widget = QtWidgets.QWidget()  # create new right widget
-        self.right_widget.setObjectName('right_widget')
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
+    def attack(self, ini_start_time, pattern_mine_method_list, stop_iter_perc,
+               stop_iter_perc_lm, min_part_size, max_num_many, re_id_method, expand_lang_model, lang_model_min_freq):
+        global pm_dict
+        global result_name_list
+        #
+        for pattern_mine_method in pattern_mine_method_list:
+            assert pattern_mine_method in ['apriori', 'mapriori', 'maxminer', \
+                                           'hmine', 'fpmax']
 
-        self.right_layout = self.verticalLayout
-        self.right_widget.setLayout(self.right_layout)  # set right widget to layout
+        #
+        stop_iter_perc = float(stop_iter_perc)
+        assert 0.0 < stop_iter_perc < 100.0, stop_iter_perc
+        stop_iter_perc_lm = float(stop_iter_perc_lm)
+        assert 0.0 < stop_iter_perc_lm < 100.0, stop_iter_perc_lm
+        min_part_size = float(min_part_size)
+        assert min_part_size > 1, min_part_size
+        max_num_many = float(max_num_many)
+        assert max_num_many > 1, max_num_many
+        assert re_id_method in ['all', 'set_inter', 'bf_tuple', 'none']
+        assert expand_lang_model in ['single', 'tuple', 'all'], expand_lang_model
+        lang_model_min_freq = float(lang_model_min_freq)
+        assert lang_model_min_freq >= 1, lang_model_min_freq
 
-        # right_widget is beginning at row 0, column 2, take 12 rows, 10 columns
-        self.main_layout.addWidget(self.right_widget, 0, 2, 12, 10)
-        self.widget = QtWidgets.QWidget()
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget)
-        self.horizontalLayout.setObjectName("horizontalLayout")
+        pma.attack(pm_dict['q'], pm_dict['padded'], pm_dict['bf_harden'], pm_dict['encode_attr_list'], pm_dict['plain_attr_list'], pm_dict['plain_rec_id_col'], pm_dict['same_data_attr_flag'],
+                   pm_dict['encode_bf_dict'], pm_dict['bf_encode'], pm_dict['hash_type'], pm_dict['bf_len'], pm_dict['num_hash_funct'], pm_dict['enc_param_list'], pm_dict['res_file_name'],
+                   ini_start_time,
+                   pm_dict['harden_param_list'], pm_dict['encode_true_q_gram_pos_map_dict'], pattern_mine_method_list,
+                   pm_dict['encode_base_data_set_name'],
+                   pm_dict['plain_base_data_set_name'], pm_dict['mc_chain_len'], pm_dict['mc_sel_method'], pm_dict['encode_rec_id_col'], pm_dict['encode_rec_val_list'],
+                   pm_dict['encode_attr_name_list'], pm_dict['plain_rec_val_list'], pm_dict['plain_attr_name_list'],
+                   str(pattern_mine_method_list), stop_iter_perc, stop_iter_perc_lm, min_part_size,
+                   max_num_many, re_id_method, expand_lang_model, lang_model_min_freq)
+        QMessageBox.information(self, 'message', "attack finished!")
+        result_name_list = result_name_list.append(pm_dict['res_file_name'])
+        self.setRightWidget(flag=C.FLAG_EVAL)
 
-        # reset encode process
-        self.pushButton_del = QtWidgets.QPushButton(self.widget)
-        self.pushButton_del.setObjectName("pushButton_del")
-        self.horizontalLayout.addWidget(self.pushButton_del)
-        self.pushButton_del.clicked.connect(lambda: self.setRightWidget(self, flag=C.FLAG_ENCODING))
-        self.pushButton_del.setStyleSheet(''' text-align : center;
-                                                      background-color : #f44336;
-                                                      height : 60px;
-                                                      width: 160px;
-                                                      border-style: outset;
-                                                      border-radius: 50px;
-                                                      color: #fff;
-                                                      font : 22px  ''')
+    def getResultList(self, name):
+        global result_name_list
 
-        # space
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
-
-        self.label = QtWidgets.QLabel(self.widget)
-        font = QtGui.QFont()
-        font.setPointSize(26)
-        self.label.setFont(font)
-        self.label.setObjectName("label")
-        self.horizontalLayout.addWidget(self.label)
-
-        # space1
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem1)
-
-        # attack dataset
-        self.pushButton_3 = QtWidgets.QPushButton(self.widget)
-        self.pushButton_3.setObjectName("pushButton")
-        self.horizontalLayout.addWidget(self.pushButton_3)
-        self.pushButton_3.clicked.connect(lambda: self.setRightWidget(self, flag=C.FLAG_ATTACK))
-        self.pushButton_3.setStyleSheet(''' text-align : center;
-                                                      background-color : #009688;
-                                                      height : 80px;
-                                                      width: 170px;
-                                                      border-style: outset;
-                                                      border-radius: 100px;
-                                                      color: #fff;
-                                                      font : 26px  ''')
-
-        # table form
-        self.verticalLayout.addWidget(self.widget)
-        self.tableWidget = QtWidgets.QTableWidget()
-        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.tableWidget.setObjectName("tableWidget")
-        self.verticalLayout.addWidget(self.tableWidget)
-
-        view_len = max(20, len(encode_bf_dict))
-        self.tableWidget.setRowCount(view_len)
-        self.tableWidget.setColumnCount(1)
-
-        i = 0
-        for v in encode_bf_dict.values():
-            item = QTableWidgetItem(str(v))
+        data = pd.read_csv(name)
+        if len(data) == 0:
+            self.tableWidget.setRowCount(1)
+            item = QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
-            item.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.tableWidget.setItem(i, 0, item)
-            i += 1
-            if i > view_len:
-                break
+            item.setText("无数据")
+            self.tableWidget.setItem(0, 0, item)
+            return
 
-        # set shown values
+        self.tableWidget.setRowCount(data.shape[0] + 1)
+        self.tableWidget.setColumnCount(data.shape[1])
+
+        # table column name
         _translate = QtCore.QCoreApplication.translate
-        self.label.setText(_translate("Form", "Encoding result view"))
-        self.pushButton_del.setText(_translate("Form", "Back and Reset"))
-        self.pushButton_3.setText(_translate("Form", "Next step"))
+        column_name_list = list(data.columns)
+        for i in range(len(column_name_list)):
+            item = QtWidgets.QTableWidgetItem()
+            self.tableWidget.setHorizontalHeaderItem(i, item)
+        self.verticalLayout.addWidget(self.tableWidget)
+        for i in range(len(column_name_list)):
+            item = self.tableWidget.horizontalHeaderItem(i)
+            item.setText(_translate("Form", column_name_list[i]))
 
-        return self.right_widget
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                item = QTableWidgetItem(str(data.iloc[i, j]))
+                item.setTextAlignment(QtCore.Qt.AlignCenter)
+                item.setFlags(QtCore.Qt.ItemIsEnabled)
+                self.tableWidget.setItem(i + 1, j, item)
 
-    def attack(self):
-        QMessageBox.information(self, 'message', "attack begin!")
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

@@ -1,9 +1,9 @@
 from libs import importing
 from libs import bfEncoding
 from libs import evaluating
-#from libs import patternmining_attack as pma
-#from libs import bit_patternfrequency_attack as bpf
-#from libs import graph_matching_attack as gma
+from libs.attacks import patternmining_attack as pma
+from libs.attacks import bit_patternfrequency_attack as bpf
+from libs.attacks import graph_matching_attack as gma
 import csv
 import gzip
 import math
@@ -260,15 +260,15 @@ elif (attack_method == 'bfcolpattern'):
 # graph matching based attack
 elif (attack_method == 'graphmatching'):
     # attack parameters
-    plain_sim_funct_name =  sys.argv[15].lower()
-    sim_diff_adjust_flag =  eval(sys.argv[16])
+    plain_sim_funct_name = sys.argv[15].lower()
+    sim_diff_adjust_flag = eval(sys.argv[16])
     encode_sim_funct_name = sys.argv[-1].lower()
 
     assert plain_sim_funct_name in ['dice', 'jacc'], plain_sim_funct_name
     assert encode_sim_funct_name in ['dice', 'jacc', 'hamm'], encode_sim_funct_name
     sim_diff_adjust_flag in [True, False], sim_diff_adjust_flag
 
-    gma.attack(q,hash_type,num_hash_funct,bf_len,bf_harden,bf_encode,padded,enc_param_list,encode_data_set_name,
-            encode_rec_id_col,encode_col_sep_char,encode_header_line_flag,encode_attr_list,plain_data_set_name,
-            plain_rec_id_col,plain_col_sep_char,plain_header_line_flag,plain_attr_list,
-            plain_sim_funct_name,sim_diff_adjust_flag,encode_sim_funct_name)
+    gma.attack(q, hash_type, num_hash_funct, bf_len, bf_harden, bf_encode, padded, enc_param_list, encode_data_set_name,
+               encode_rec_id_col, encode_col_sep_char, encode_header_line_flag, encode_attr_list, plain_data_set_name,
+               plain_rec_id_col, plain_col_sep_char, plain_header_line_flag, plain_attr_list,
+               plain_sim_funct_name, sim_diff_adjust_flag, encode_sim_funct_name)

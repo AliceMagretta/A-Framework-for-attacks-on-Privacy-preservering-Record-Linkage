@@ -276,6 +276,8 @@ class CryptoLongtermKeyBFEncoding():
       if (mc_harden_class != None):
         extra_q_gram_set = \
                  mc_harden_class.get_other_q_grams_from_lang_model(q_gram_set)
+        print(q_gram_set)
+        print(extra_q_gram_set)
         q_gram_set = q_gram_set | extra_q_gram_set
 
       # Check if q-gram position dictionary is required or not
@@ -297,7 +299,7 @@ class CryptoLongtermKeyBFEncoding():
       else:
         assert len(bf) == len(clk_bf)  # All BFs must be of same length
 
-        clk_bf = Union[clk_bf, bf]  # Binary OR of attribute BFs.
+        clk_bf |= bf  # Binary OR of attribute BFs.
 
     if (get_bit_pos_flag == True):
       return clk_bf, all_q_gram_pos_dict

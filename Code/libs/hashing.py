@@ -125,10 +125,10 @@ class DoubleHashing():
       if (salt_str != None):  # If a salt is given concatenate with q-gram
         q_gram = q_gram + salt_str
 
-      hex_str1 = self.hash_funct1(q_gram).hexdigest()
+      hex_str1 = self.hash_funct1(q_gram.encode('utf-8')).hexdigest()
       int1 =     int(hex_str1, 16)
 
-      hex_str2 = self.hash_funct2(q_gram).hexdigest()
+      hex_str2 = self.hash_funct2(q_gram.encode('utf-8')).hexdigest()
       int2 =     int(hex_str2, 16)
 
       for i in range(1, k+1):
