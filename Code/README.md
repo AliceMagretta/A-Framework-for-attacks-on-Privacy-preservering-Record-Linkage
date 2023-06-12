@@ -23,7 +23,7 @@ The following extra packages are required:
 Running the attack program:
 ===========================
 
-To run the program, follow these steps:
+To run the program, open the GUI_main.py, and follow these steps:
 
 1. click strat in Guide page
 2. Import database using topright button
